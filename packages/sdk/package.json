@@ -1,0 +1,19 @@
+{
+  "name": "@aicore-office/sdk",
+  "version": "0.1.0",
+  "description": "TypeScript client for Aicore Office — emit agent state, tasks, usage and messages.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.3"
+  }
+}

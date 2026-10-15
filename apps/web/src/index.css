@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+body {
+  background: #0b0e14;
+  color: #e6e9ef;
+}
+
+.dark-mode {
+  --bg: #0b0e14;
+  --panel: #141922;
+  --border: #232a36;
+  --text: #e6e9ef;
+  --muted: #8b95a7;
+}
+
+.light-mode {
+  --bg: #f5f7fa;
+  --panel: #ffffff;
+  --border: #e2e6ec;
+  --text: #0b0e14;
+  --text: #0b0e14;
+  --muted: #5a6472;
+}
