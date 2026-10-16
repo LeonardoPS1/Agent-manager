@@ -13,4 +13,3 @@ EXPOSE 3000
 
 # Run migrations, then start the API
 CMD ["sh", "-c", "node dist/db/migrate.js && node dist/index.js"]
-@99@
