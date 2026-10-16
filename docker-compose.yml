@@ -1,18 +1,29 @@
+# Deployment unit for Dokploy.
+#
+# Only the web service is reachable from outside: it serves the built dashboard
+# and reverse-proxies /v1 and /health to the api container (see
+# apps/web/nginx.conf), so the browser talks to a single origin and PostgreSQL,
+# Redis and the API stay on the internal compose network.
+#
+# Required environment (set these in the Dokploy app, not in the repo):
+#   POSTGRES_PASSWORD  - database password
+#   JWT_SECRET         - token signing secret
+# Optional:
+#   POSTGRES_USER, POSTGRES_DB, VITE_API_URL, VITE_WS_URL, CORS_ORIGIN,
+#   OFFICE_REQUIRE_AUTH, OFFICE_MCP_TOKEN
 services:
   postgres:
     image: postgres:16-alpine
     container_name: office-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: office
-      POSTGRES_PASSWORD: office_dev
-      POSTGRES_DB: office_db
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${POSTGRES_USER:-office}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      POSTGRES_DB: ${POSTGRES_DB:-office_db}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U office -d office_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-office} -d ${POSTGRES_DB:-office_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -21,8 +32,6 @@ services:
     image: redis:7-alpine
     container_name: office-redis
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -40,14 +49,20 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
-      DATABASE_URL: postgresql://office:office_dev@postgres:5432/office_db
+      DATABASE_URL: postgresql://${POSTGRES_USER:-office}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-office_db}
       REDIS_URL: redis://redis:6379
-      JWT_SECRET: ${JWT_SECRET:-change_me_in_prod_super_secret_key}
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
-      # Set to "true" to enforce per-agent bearer tokens on POST /v1/events
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
+      # The dashboard is served from the same origin as the API, so this only
+      # matters for other clients (adapters, MCP, scripts).
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://agentmanager.aicorebots.com}
+      # Set to "true" to enforce per-agent bearer tokens on POST /v1/events.
       OFFICE_REQUIRE_AUTH: ${OFFICE_REQUIRE_AUTH:-false}
-    ports:
-      - "3000:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
     depends_on:
       postgres:
         condition: service_healthy
@@ -59,14 +74,20 @@ services:
       context: ./apps/web
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
-        VITE_WS_URL: ${VITE_WS_URL:-ws://localhost:3000}
+        # Vite inlines these at build time. Both point at the public origin
+        # because nginx proxies /v1 on the same host.
+        VITE_API_URL: ${VITE_API_URL:-https://agentmanager.aicorebots.com}
+        VITE_WS_URL: ${VITE_WS_URL:-wss://agentmanager.aicorebots.com}
     container_name: office-web
     restart: unless-stopped
-    ports:
-      - "5173:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
     depends_on:
-      - api
+      api:
+        condition: service_started
 
   mcp-server:
     build:
