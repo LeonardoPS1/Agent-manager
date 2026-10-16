@@ -13,9 +13,15 @@ Aicore Office uses only CC0/MIT licensed assets as specified.
 | Mini Characters | Kenney | CC0-1.0 | https://kenney.nl/ |
 | Furniture Kit, UI | Kenney | CC0-1.0 | https://kenney.nl/ |
 
-Each pack ships its own `License.txt`, kept next to the assets it covers. The
-packs are not committed to this repository; see the "Asset packs" section of the
-README for the expected folder layout and the `npm run models:scan` helper.
+Each pack ships its own `License.txt`, kept next to the assets it covers. A
+curated subset of these packs (~26 MB, only the files the catalog references) is
+committed to this repository; the full archives are not. See the "Asset packs"
+section of the README for the folder layout and the `npm run models:scan` helper.
+
+Two local changes were applied to the committed Quaternius `.gltf` files: their
+`images[].uri` entries pointed at `T_*_Normal_png.png` files that do not exist in
+the upstream pack (the real names are `T_*_Normal.png`), and textures were
+downscaled for the web. No geometry, rig or texture content was altered.
 
 ## Optimization Tools
 - **gltfpack** - MIT - https://github.com/zeux/meshoptimizer/tree/master/gltfpack

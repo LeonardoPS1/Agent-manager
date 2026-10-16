@@ -102,24 +102,37 @@ to the procedural character, so the office never renders an empty desk.
 
 ### Asset packs
 
-The model packs are **not committed** (they are large, roughly 40 MB). Place the
-CC0 packs so that `apps/web/public/models/` ends up containing:
+The repository ships a **curated CC0 subset** of the character packs under
+`apps/web/public/models/` (26 MB, 72 files). It contains exactly the files the
+catalog references:
 
 ```
-KayKit_Adventurers_2.0_FREE/
-KayKit_Character_Animations_1.1/
-Universal Base Characters[Standard]/
-Universal Animation Library[Standard]/
-kenney_mini-characters/
+KayKit_Adventurers_2.0_FREE/Characters/gltf/   6 character GLBs
+KayKit_Adventurers_2.0_FREE/Samples/           5 preview images
+KayKit_Character_Animations_1.1/Animations/    Rig_Medium + Rig_Large clip GLBs
+KayKit_Character_Animations_1.1/Mannequin Character/
+Universal Base Characters[Standard]/           2 characters + their textures
+Universal Animation Library[Standard]/         UAL1_Standard.glb
+kenney_mini-characters/                        12 characters + 12 previews
 ```
 
-Then generate the clip and skeleton manifest (optional, but it is the fastest way
-to inspect real clip names and bone names without starting the app):
+Textures were downscaled (2048 -> 1024 for colour maps, 1024 -> 512 for normal
+maps) and maps that no material references were dropped. Models are loaded on
+demand, so none of this affects the JavaScript bundle; the size only matters when
+the static files are served.
 
-```bash
-npm run models:scan   # writes apps/web/public/models/manifest.json
-```
+Two of the shipped `.gltf` files needed a local fix: their `images[].uri` entries
+pointed at `T_*_Normal_png.png` names that do not exist in the upstream pack, so
+they were rewritten to the real `T_*_Normal.png` files. Keep that in mind when
+updating those assets.
 
+`npm run models:scan` reads the GLB/glTF containers and writes the generated,
+git-ignored `apps/web/public/models/manifest.json` with clip names, joint counts
+and the nodes each animation drives - the fastest way to inspect a new pack
+without starting the app.
+
+To add a character, drop the GLB into that folder and register it in
+`apps/web/src/utils/characters.ts`. The full archives stay outside the repository.
 Without the packs the app still runs: every agent falls back to the procedural
 character and the Character tab reports a load error.
 
